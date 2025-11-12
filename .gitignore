@@ -1,0 +1,8 @@
+node_modules/
+*.log
+.DS_Store
+output/
+*.tmp
+test/assets/*.webm
+test/assets/*.mp4
+test/assets/*.mov

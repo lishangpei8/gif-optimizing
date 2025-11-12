@@ -1,0 +1,27 @@
+# 测试资源目录
+
+请将以下文件放置在此目录:
+
+- `sample.gif` - 原始GIF文件
+- `sample.webm` - 使用 gif-to-webm.js 转换的WebM文件
+- `sample.mp4` - 使用 gif-to-hevc.js 转换的HEVC文件
+
+## 快速开始
+
+```bash
+# 假设你有一个名为 animation.gif 的文件
+
+# 1. 转换为WebM
+node scripts/gif-to-webm.js animation.gif test/assets/sample.webm
+
+# 2. 转换为HEVC
+node scripts/gif-to-hevc.js animation.gif test/assets/sample.mp4
+
+# 3. 复制原始GIF
+cp animation.gif test/assets/sample.gif
+
+# 4. 启动测试服务器
+npm run serve
+```
+
+然后在浏览器中打开 http://localhost:8080 进行测试。
