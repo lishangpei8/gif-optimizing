@@ -29,38 +29,78 @@ npm install
 
 ### FFmpeg安装选项
 
-项目支持多种方式使用FFmpeg：
+转换脚本会自动检测并使用可用的FFmpeg（优先级：项目bin/ > ffmpeg-static > 系统FFmpeg > Homebrew路径）
 
-**选项1: 自动下载到项目目录（推荐！适用于所有macOS版本）**
+#### 选项1: 手动下载到项目目录（推荐！跨平台通用）
+
+**macOS (包括Sequoia等新版本):**
 ```bash
-npm run install-ffmpeg
-```
-- ✅ 适用于macOS Sequoia等新版本系统
-- ✅ 无需Homebrew
-- ✅ 自动下载、解压、配置
-- ✅ FFmpeg存放在项目bin/目录，不影响系统
+# 1. 访问并下载
+# 浏览器打开: https://evermeet.cx/ffmpeg/
+# 点击下载 ffmpeg.zip
 
-**选项2: 使用Homebrew（macOS）**
+# 2. 创建bin目录（如果不存在）
+mkdir -p bin
+
+# 3. 解压ffmpeg到bin目录
+# 将下载的ffmpeg文件移动到 bin/ffmpeg
+
+# 4. 添加执行权限
+chmod +x bin/ffmpeg
+
+# 5. 验证
+bin/ffmpeg -version
+```
+
+**Windows:**
+```bash
+# 1. 访问并下载
+# 浏览器打开: https://www.gyan.dev/ffmpeg/builds/
+# 下载 ffmpeg-release-essentials.zip
+
+# 2. 解压下载的zip文件
+
+# 3. 创建bin目录（如果不存在）
+mkdir bin
+
+# 4. 复制文件
+# 将解压后的 bin/ffmpeg.exe 复制到项目的 bin/ 目录
+
+# 5. 验证
+bin\ffmpeg.exe -version
+```
+
+**Linux:**
+```bash
+# 使用系统包管理器（推荐）
+sudo apt-get install ffmpeg  # Ubuntu/Debian
+sudo yum install ffmpeg       # CentOS/RHEL
+sudo pacman -S ffmpeg         # Arch Linux
+```
+
+#### 选项2: 使用系统包管理器
+
+**macOS (Homebrew):**
 ```bash
 brew install ffmpeg
 ```
 ⚠️ 注意：macOS Sequoia可能不支持，请使用选项1
 
-**选项3: 使用系统包管理器**
+**Windows (Chocolatey):**
 ```bash
-# Ubuntu/Debian
-sudo apt-get install ffmpeg
-
-# Windows
-# 从 https://ffmpeg.org/download.html 下载并添加到PATH
+choco install ffmpeg
 ```
 
-**选项4: 使用ffmpeg-static包**
+**Ubuntu/Debian:**
+```bash
+sudo apt-get install ffmpeg
+```
+
+#### 选项3: 使用ffmpeg-static包（可选）
 ```bash
 npm install  # 会自动下载ffmpeg-static
 ```
-
-> 💡 转换脚本会自动检测并使用可用的FFmpeg（优先级：项目bin/ > ffmpeg-static > 系统FFmpeg > Homebrew路径）
+⚠️ npm安装可能较慢或失败，推荐使用选项1
 
 ## 使用方法
 
@@ -293,41 +333,55 @@ gif-optimizing/
 ### FFmpeg相关问题
 
 **Q: macOS Sequoia上Homebrew无法安装FFmpeg怎么办?**
-A: macOS Sequoia太新，Homebrew可能还不支持。使用我们的自动下载工具：
-```bash
-npm run install-ffmpeg
-```
-这会自动下载FFmpeg到项目目录，无需Homebrew。
+A: macOS Sequoia太新，Homebrew可能还不支持。使用手动下载方式：
+1. 访问 https://evermeet.cx/ffmpeg/
+2. 下载 ffmpeg.zip
+3. 解压后将ffmpeg文件移动到项目的 bin/ 目录
+4. 运行 `chmod +x bin/ffmpeg`
+5. 验证：`bin/ffmpeg -version`
 
 **Q: 遇到 "spawn ffmpeg EACCES" 或 "spawn error -88" 错误?**
-A: 这是FFmpeg权限或路径问题。最简单的解决方案：
-```bash
-npm run install-ffmpeg
-```
-这会下载一个干净的FFmpeg到项目目录并自动配置。
+A: 这是FFmpeg权限或路径问题。解决方案：
 
-或者手动修复权限：
+修复权限（macOS/Linux）：
 ```bash
 npm run fix-ffmpeg
 ```
-
-**Q: 无法找到可用的FFmpeg?**
-A: 使用自动下载工具（推荐）：
+或手动修复：
 ```bash
-npm run install-ffmpeg
+chmod +x node_modules/ffmpeg-static/ffmpeg  # 如果使用ffmpeg-static
+chmod +x bin/ffmpeg                         # 如果使用项目bin目录
 ```
 
-或手动下载：
+**Q: 无法找到可用的FFmpeg?**
+A: 手动下载到项目目录（推荐）：
+
+**macOS:**
 1. 访问 https://evermeet.cx/ffmpeg/
 2. 下载 ffmpeg.zip
 3. 解压到项目的 bin/ 目录
 4. 运行 `chmod +x bin/ffmpeg`
 
+**Windows:**
+1. 访问 https://www.gyan.dev/ffmpeg/builds/
+2. 下载 ffmpeg-release-essentials.zip
+3. 解压后将 bin/ffmpeg.exe 复制到项目的 bin/ 目录
+
+**Linux:**
+```bash
+sudo apt-get install ffmpeg  # Ubuntu/Debian
+```
+
 **Q: npm install 一直卡住不动?**
 A: 这通常是因为下载ffmpeg-static包太慢。解决方案：
 1. 取消安装 (Ctrl+C)
-2. 使用自动下载工具：`npm run install-ffmpeg`
-3. 或只安装必需依赖：`npm install --no-optional`
+2. 只安装必需依赖：`npm install --no-optional`
+3. 手动下载FFmpeg到项目bin/目录（见上面说明）
+
+**Q: Windows上如何安装FFmpeg?**
+A: Windows有两种方式：
+1. **下载到项目目录（推荐）**：访问 https://www.gyan.dev/ffmpeg/builds/，下载后解压，将ffmpeg.exe复制到项目bin/目录
+2. **添加到系统PATH**：下载后将ffmpeg.exe所在目录添加到系统环境变量PATH中
 
 ### 转换相关问题
 

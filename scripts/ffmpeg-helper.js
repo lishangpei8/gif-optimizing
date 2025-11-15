@@ -13,12 +13,14 @@ const path = require('path');
  */
 function setupFFmpeg(ffmpeg) {
   const methods = [
-    // 方法1: 尝试使用项目本地的FFmpeg (bin/ffmpeg)
+    // 方法1: 尝试使用项目本地的FFmpeg (bin/ffmpeg 或 bin/ffmpeg.exe)
     {
       name: '项目本地FFmpeg',
       check: () => {
         try {
-          const localFFmpegPath = path.join(__dirname, '..', 'bin', 'ffmpeg');
+          // Windows使用ffmpeg.exe，其他系统使用ffmpeg
+          const ffmpegBinary = process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg';
+          const localFFmpegPath = path.join(__dirname, '..', 'bin', ffmpegBinary);
 
           if (!fs.existsSync(localFFmpegPath)) {
             return { success: false, error: '项目bin目录中没有FFmpeg' };
@@ -153,14 +155,41 @@ function setupFFmpeg(ffmpeg) {
 
   // 所有方法都失败了
   console.error('\n❌ 无法找到可用的FFmpeg！\n');
-  console.error('请选择以下任一方式安装FFmpeg：\n');
-  console.error('方法1: 自动下载到项目目录 (推荐！)');
-  console.error('  node download-ffmpeg.js\n');
-  console.error('方法2: 使用Homebrew (如果支持你的macOS版本)');
-  console.error('  brew install ffmpeg\n');
-  console.error('方法3: 手动下载FFmpeg');
-  console.error('  访问: https://evermeet.cx/ffmpeg/');
-  console.error('  下载后解压到项目的 bin/ 目录\n');
+  console.error('请按照以下步骤手动安装FFmpeg：\n');
+
+  // 检测操作系统
+  const platform = process.platform;
+
+  if (platform === 'darwin') {
+    // macOS
+    console.error('macOS安装方法：\n');
+    console.error('方法1: 手动下载到项目目录 (推荐，支持所有macOS版本)');
+    console.error('  1. 访问: https://evermeet.cx/ffmpeg/');
+    console.error('  2. 下载 ffmpeg.zip');
+    console.error('  3. 解压到项目的 bin/ 目录');
+    console.error('  4. 运行: chmod +x bin/ffmpeg\n');
+    console.error('方法2: 使用Homebrew');
+    console.error('  brew install ffmpeg');
+    console.error('  (注意: macOS Sequoia可能不支持)\n');
+  } else if (platform === 'win32') {
+    // Windows
+    console.error('Windows安装方法：\n');
+    console.error('方法1: 手动下载到项目目录 (推荐)');
+    console.error('  1. 访问: https://www.gyan.dev/ffmpeg/builds/');
+    console.error('  2. 下载 ffmpeg-release-essentials.zip');
+    console.error('  3. 解压后，将 bin/ffmpeg.exe 复制到项目的 bin/ 目录\n');
+    console.error('方法2: 添加到系统PATH');
+    console.error('  1. 访问: https://ffmpeg.org/download.html#build-windows');
+    console.error('  2. 下载并解压');
+    console.error('  3. 将 ffmpeg.exe 所在目录添加到系统 PATH\n');
+  } else {
+    // Linux等其他系统
+    console.error('Linux安装方法：\n');
+    console.error('使用包管理器安装:');
+    console.error('  sudo apt-get install ffmpeg  # Ubuntu/Debian');
+    console.error('  sudo yum install ffmpeg      # CentOS/RHEL');
+    console.error('  sudo pacman -S ffmpeg        # Arch Linux\n');
+  }
 
   return {
     success: false,

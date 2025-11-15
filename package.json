@@ -9,7 +9,6 @@
     "convert:split": "node scripts/gif-to-split-mp4.js",
     "convert:batch": "node scripts/batch-convert.js",
     "serve": "http-server ./test -p 8080 -o",
-    "install-ffmpeg": "node download-ffmpeg.js",
     "fix-ffmpeg": "node fix-ffmpeg-permissions.js"
   },
   "keywords": ["gif", "webm", "hevc", "h5", "optimization", "alpha", "transparency", "canvas", "mp4"],
