@@ -1,20 +1,23 @@
 {
   "name": "gif-optimizing",
   "version": "1.0.0",
-  "description": "GIF to WebM and HEVC with Alpha converter for H5 pages",
+  "description": "GIF to WebM, HEVC and RGB+Alpha Split MP4 converter for H5 pages",
   "main": "index.js",
   "scripts": {
     "convert:webm": "node scripts/gif-to-webm.js",
     "convert:hevc": "node scripts/gif-to-hevc.js",
+    "convert:split": "node scripts/gif-to-split-mp4.js",
     "convert:batch": "node scripts/batch-convert.js",
     "serve": "http-server ./test -p 8080 -o"
   },
-  "keywords": ["gif", "webm", "hevc", "h5", "optimization", "alpha", "transparency"],
+  "keywords": ["gif", "webm", "hevc", "h5", "optimization", "alpha", "transparency", "canvas", "mp4"],
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "ffmpeg-static": "^5.2.0",
     "fluent-ffmpeg": "^2.1.2"
+  },
+  "optionalDependencies": {
+    "ffmpeg-static": "^5.2.0"
   },
   "devDependencies": {
     "http-server": "^14.1.1"

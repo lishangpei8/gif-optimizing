@@ -1,12 +1,18 @@
 #!/usr/bin/env node
 
 const ffmpeg = require('fluent-ffmpeg');
-const ffmpegPath = require('ffmpeg-static');
 const fs = require('fs');
 const path = require('path');
 
-// 设置ffmpeg路径
-ffmpeg.setFfmpegPath(ffmpegPath);
+// 尝试使用ffmpeg-static，如果不存在则使用系统FFmpeg
+try {
+  const ffmpegPath = require('ffmpeg-static');
+  ffmpeg.setFfmpegPath(ffmpegPath);
+  console.log('✓ 使用ffmpeg-static');
+} catch (e) {
+  // 使用系统FFmpeg
+  console.log('✓ 使用系统FFmpeg (请确保已安装)');
+}
 
 /**
  * 将GIF转换为拼接MP4格式 (RGB+Alpha水平拼接, 用于Canvas渲染)

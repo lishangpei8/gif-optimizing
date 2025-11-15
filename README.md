@@ -27,7 +27,33 @@
 npm install
 ```
 
-系统需要安装FFmpeg (通过ffmpeg-static自动安装)
+### FFmpeg安装选项
+
+项目支持两种方式使用FFmpeg：
+
+**选项1: 自动安装（推荐新手）**
+- npm install会自动下载ffmpeg-static包
+- 无需手动安装FFmpeg
+- 如果下载失败，请使用选项2
+
+**选项2: 使用系统FFmpeg（推荐）**
+```bash
+# macOS
+brew install ffmpeg
+
+# Ubuntu/Debian
+sudo apt-get install ffmpeg
+
+# Windows
+# 从 https://ffmpeg.org/download.html 下载并添加到PATH
+```
+
+安装完成后，只需安装核心依赖：
+```bash
+npm install --no-optional  # 跳过ffmpeg-static
+```
+
+> 💡 转换脚本会自动检测并使用可用的FFmpeg（优先ffmpeg-static，其次系统FFmpeg）
 
 ## 使用方法
 
