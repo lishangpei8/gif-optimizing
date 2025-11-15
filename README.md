@@ -283,6 +283,35 @@ gif-optimizing/
 
 ## 常见问题
 
+### FFmpeg相关问题
+
+**Q: 遇到 "spawn ffmpeg EACCES" 错误怎么办?**
+A: 这是FFmpeg没有执行权限的问题，运行以下命令修复：
+```bash
+npm run fix-ffmpeg
+```
+或手动修复：
+```bash
+chmod +x node_modules/ffmpeg-static/ffmpeg
+```
+
+如果仍有问题，推荐使用系统FFmpeg：
+```bash
+# macOS
+brew install ffmpeg
+
+# 然后使用系统FFmpeg
+npm install --no-optional
+```
+
+**Q: npm install 一直卡住不动?**
+A: 这通常是因为下载ffmpeg-static包太慢。解决方案：
+1. 取消安装 (Ctrl+C)
+2. 安装系统FFmpeg（见上面说明）
+3. 只安装必需依赖：`npm install --no-optional`
+
+### 转换相关问题
+
 **Q: 转换后透明度丢失了?**
 A: 确保使用了正确的像素格式 (yuva420p for WebM, alpha layer for HEVC)
 
