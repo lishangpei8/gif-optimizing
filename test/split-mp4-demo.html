@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RGB+Alpha拼接MP4方案演示 - AlphaVideoRenderer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: white;
+      text-align: center;
+      margin-bottom: 10px;
+      font-size: 2rem;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .subtitle {
+      color: rgba(255,255,255,0.9);
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 1rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+
+    .info-section {
+      margin-bottom: 30px;
+    }
+
+    .info-section h2 {
+      color: #667eea;
+      margin-bottom: 15px;
+      font-size: 1.5rem;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 10px;
+    }
+
+    .info-section h3 {
+      color: #764ba2;
+      margin: 20px 0 10px 0;
+      font-size: 1.2rem;
+    }
+
+    .info-section ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .info-section li {
+      padding: 8px 0;
+      padding-left: 25px;
+      position: relative;
+    }
+
+    .info-section li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #667eea;
+      font-weight: bold;
+    }
+
+    .demo-area {
+      text-align: center;
+      padding: 30px;
+      background: #f5f5f5;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .canvas-container {
+      display: inline-block;
+      position: relative;
+      margin: 20px auto;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    /* 棋盘背景显示透明度 */
+    .canvas-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image:
+        linear-gradient(45deg, #ddd 25%, transparent 25%),
+        linear-gradient(-45deg, #ddd 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #ddd 75%),
+        linear-gradient(-45deg, transparent 75%, #ddd 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+      z-index: 0;
+    }
+
+    canvas {
+      position: relative;
+      z-index: 1;
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    button:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .status {
+      margin-top: 20px;
+      padding: 15px;
+      background: #fff;
+      border-radius: 6px;
+      text-align: center;
+      font-family: monospace;
+    }
+
+    .status.error {
+      background: #fee;
+      color: #c00;
+    }
+
+    .status.success {
+      background: #efe;
+      color: #060;
+    }
+
+    .status.info {
+      background: #eef;
+      color: #006;
+    }
+
+    .code-block {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 20px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 15px 0;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .code-block code {
+      color: #f8f8f2;
+    }
+
+    .highlight {
+      background: rgba(102, 126, 234, 0.1);
+      padding: 3px 6px;
+      border-radius: 3px;
+      font-family: monospace;
+      font-size: 0.9em;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .comparison-table th {
+      background: #667eea;
+      color: white;
+      font-weight: bold;
+    }
+
+    .comparison-table tr:hover {
+      background: #f5f5f5;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.85em;
+      font-weight: bold;
+      margin: 2px;
+    }
+
+    .tag.pro {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .tag.con {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      .card {
+        padding: 20px;
+      }
+
+      .controls {
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎬 RGB+Alpha拼接MP4方案演示</h1>
+    <p class="subtitle">通过Canvas API实现带透明度GIF的高效渲染方案</p>
+
+    <!-- 演示区域 -->
+    <div class="card">
+      <div class="demo-area">
+        <h3>实时渲染演示</h3>
+        <p style="color: #666; margin-bottom: 20px;">
+          将拼接的MP4视频文件拖放到下方区域，或点击按钮加载示例
+        </p>
+
+        <div class="canvas-container">
+          <canvas id="alphaCanvas"></canvas>
+        </div>
+
+        <div class="controls">
+          <button id="playBtn">▶ 播放</button>
+          <button id="pauseBtn">⏸ 暂停</button>
+          <button id="stopBtn">⏹ 停止</button>
+          <button id="speedBtn">⚡ 2x 速度</button>
+          <label for="videoInput" style="
+            background: #764ba2;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-block;
+          ">
+            📁 选择视频文件
+          </label>
+          <input type="file" id="videoInput" accept="video/mp4" style="display: none;">
+        </div>
+
+        <div id="status" class="status info">
+          等待加载视频文件...
+        </div>
+      </div>
+    </div>
+
+    <!-- 方案介绍 -->
+    <div class="card">
+      <div class="info-section">
+        <h2>📋 方案介绍</h2>
+        <p>
+          RGB+Alpha拼接方案是一种将带透明度的GIF动图转换为普通MP4视频的优化方案。
+          该方案将GIF的RGB颜色信息和Alpha透明度信息拼接成一个视频文件（左右或上下排列），
+          然后在H5页面通过Canvas API分离并渲染，实现透明度效果。
+        </p>
+
+        <h3>核心优势</h3>
+        <ul>
+          <li><strong>兼容性极佳</strong> - 支持所有能播放H.264 MP4的浏览器（几乎所有现代浏览器）</li>
+          <li><strong>单文件传输</strong> - 只需下载一个视频文件，减少HTTP请求</li>
+          <li><strong>文件体积小</strong> - 相比原始GIF可减少50-80%的体积</li>
+          <li><strong>硬件加速</strong> - 视频解码由浏览器底层优化，性能出色</li>
+          <li><strong>跨平台一致</strong> - iOS、Android、桌面浏览器均可使用</li>
+        </ul>
+
+        <h3>适用场景</h3>
+        <ul>
+          <li>需要在多种设备和浏览器上显示透明动图</li>
+          <li>不想维护多个格式的视频文件（WebM、HEVC等）</li>
+          <li>追求最佳兼容性而非极致压缩率</li>
+          <li>需要对视频播放有更多控制（速度、跳转等）</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 使用方法 -->
+    <div class="card">
+      <div class="info-section">
+        <h2>💻 使用方法</h2>
+
+        <h3>步骤1: 转换GIF为拼接MP4</h3>
+        <p>使用提供的转换脚本将GIF转换为拼接MP4：</p>
+        <div class="code-block">
+<code># 安装依赖
+npm install
+
+# 转换为水平拼接MP4（RGB在左，Alpha在右）
+node scripts/gif-to-split-mp4.js input.gif output.mp4
+
+# 转换为垂直拼接MP4（RGB在上，Alpha在下）
+node scripts/gif-to-split-mp4.js input.gif output.mp4 --layout vertical
+
+# 自定义质量和编码参数
+node scripts/gif-to-split-mp4.js input.gif output.mp4 --crf 20 --preset slow</code>
+        </div>
+
+        <h3>步骤2: 在HTML中引入渲染器</h3>
+        <div class="code-block">
+<code>&lt;!-- 引入渲染器脚本 --&gt;
+&lt;script src="scripts/alpha-video-renderer.js"&gt;&lt;/script&gt;
+
+&lt;!-- 创建Canvas元素 --&gt;
+&lt;canvas id="myCanvas"&gt;&lt;/canvas&gt;</code>
+        </div>
+
+        <h3>步骤3: 初始化并播放</h3>
+        <div class="code-block">
+<code>&lt;script&gt;
+  // 创建渲染器实例
+  const renderer = new AlphaVideoRenderer({
+    videoSrc: 'path/to/output.mp4',
+    canvas: document.getElementById('myCanvas'),
+    layout: 'horizontal', // 或 'vertical'
+    autoplay: true,
+    loop: true
+  });
+
+  // 播放视频
+  renderer.play();
+
+  // 控制播放
+  // renderer.pause();
+  // renderer.stop();
+  // renderer.setPlaybackRate(2.0); // 2倍速
+&lt;/script&gt;</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- 方案对比 -->
+    <div class="card">
+      <div class="info-section">
+        <h2>📊 方案对比</h2>
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>方案</th>
+              <th>文件数量</th>
+              <th>浏览器兼容性</th>
+              <th>文件大小</th>
+              <th>实现复杂度</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>原始GIF</strong></td>
+              <td>1个文件</td>
+              <td>100% (所有浏览器)</td>
+              <td>较大</td>
+              <td>极简单</td>
+            </tr>
+            <tr>
+              <td><strong>WebM (VP9)</strong></td>
+              <td>1个文件</td>
+              <td>~70% (Chrome, Firefox, Edge)</td>
+              <td>小 (50-70%减少)</td>
+              <td>简单</td>
+            </tr>
+            <tr>
+              <td><strong>HEVC Alpha</strong></td>
+              <td>2个文件</td>
+              <td>~30% (仅iOS 11+, macOS Safari)</td>
+              <td>很小 (60-80%减少)</td>
+              <td>中等</td>
+            </tr>
+            <tr style="background: #fffbf0;">
+              <td><strong>RGB+Alpha拼接MP4</strong></td>
+              <td>1个文件</td>
+              <td>95%+ (H.264支持的所有浏览器)</td>
+              <td>小 (40-70%减少)</td>
+              <td>中等</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>各方案优缺点</h3>
+
+        <h4>WebM (VP9 with Alpha)</h4>
+        <div>
+          <span class="tag pro">原生支持透明度</span>
+          <span class="tag pro">单文件</span>
+          <span class="tag pro">实现简单</span>
+          <span class="tag con">不支持iOS</span>
+          <span class="tag con">不支持Safari</span>
+        </div>
+
+        <h4>HEVC with Alpha</h4>
+        <div>
+          <span class="tag pro">文件最小</span>
+          <span class="tag pro">iOS硬件解码</span>
+          <span class="tag con">需要两个文件</span>
+          <span class="tag con">仅iOS/macOS</span>
+          <span class="tag con">兼容性差</span>
+        </div>
+
+        <h4>RGB+Alpha拼接MP4 (本方案)</h4>
+        <div>
+          <span class="tag pro">兼容性最佳</span>
+          <span class="tag pro">单文件</span>
+          <span class="tag pro">跨平台一致</span>
+          <span class="tag pro">可控性强</span>
+          <span class="tag con">需要Canvas渲染</span>
+          <span class="tag con">略大于HEVC</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 技术原理 -->
+    <div class="card">
+      <div class="info-section">
+        <h2>🔬 技术原理</h2>
+
+        <h3>1. 视频编码阶段 (FFmpeg)</h3>
+        <p>使用FFmpeg的<span class="highlight">filter_complex</span>将GIF的RGB和Alpha通道拼接：</p>
+        <div class="code-block">
+<code># 水平拼接示例
+[0:v]split=2[rgb][alpha];     # 分离成两路
+[alpha]alphaextract[a];        # 提取alpha通道
+[rgb][a]hstack                 # 水平拼接（左RGB，右Alpha）</code>
+        </div>
+
+        <h3>2. Canvas渲染阶段 (JavaScript)</h3>
+        <p>渲染器在每一帧执行以下操作：</p>
+        <ol style="padding-left: 20px;">
+          <li>从视频中读取当前帧</li>
+          <li>分离RGB部分（左半部或上半部）</li>
+          <li>分离Alpha部分（右半部或下半部）</li>
+          <li>将Alpha部分的灰度值应用到RGB的Alpha通道</li>
+          <li>使用<span class="highlight">putImageData</span>渲染到Canvas</li>
+        </ol>
+
+        <h3>3. 性能优化</h3>
+        <ul>
+          <li>使用<span class="highlight">requestAnimationFrame</span>确保流畅渲染</li>
+          <li>复用临时Canvas避免重复创建</li>
+          <li>视频解码由浏览器底层优化（硬件加速）</li>
+          <li>ImageData操作在GPU加速下性能出色</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- API文档 -->
+    <div class="card">
+      <div class="info-section">
+        <h2>📚 API文档</h2>
+
+        <h3>AlphaVideoRenderer 类</h3>
+
+        <h4>构造函数参数</h4>
+        <div class="code-block">
+<code>new AlphaVideoRenderer({
+  videoSrc: string,          // 必需：视频文件URL
+  canvas: HTMLCanvasElement, // 必需：目标Canvas元素
+  layout: 'horizontal' | 'vertical', // 可选：拼接布局（默认horizontal）
+  autoplay: boolean,         // 可选：是否自动播放（默认true）
+  loop: boolean,             // 可选：是否循环播放（默认true）
+  muted: boolean,            // 可选：是否静音（默认true）
+  playbackRate: number       // 可选：播放速度（默认1.0）
+})</code>
+        </div>
+
+        <h4>方法</h4>
+        <ul>
+          <li><span class="highlight">play()</span> - 播放视频</li>
+          <li><span class="highlight">pause()</span> - 暂停视频</li>
+          <li><span class="highlight">stop()</span> - 停止并重置视频</li>
+          <li><span class="highlight">setPlaybackRate(rate: number)</span> - 设置播放速度</li>
+          <li><span class="highlight">seekTo(time: number)</span> - 跳转到指定时间（秒）</li>
+          <li><span class="highlight">getCurrentTime(): number</span> - 获取当前播放时间</li>
+          <li><span class="highlight">getDuration(): number</span> - 获取视频总时长</li>
+          <li><span class="highlight">destroy()</span> - 销毁渲染器，释放资源</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="text-align: center; color: #666;">
+      <p>Made with ❤️ by GIF Optimizing Project</p>
+      <p style="font-size: 0.9em; margin-top: 10px;">
+        更多信息请查看项目文档
+      </p>
+    </div>
+  </div>
+
+  <!-- 引入渲染器 -->
+  <script src="../scripts/alpha-video-renderer.js"></script>
+
+  <!-- 页面交互逻辑 -->
+  <script>
+    let renderer = null;
+    const canvas = document.getElementById('alphaCanvas');
+    const status = document.getElementById('status');
+    const playBtn = document.getElementById('playBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const speedBtn = document.getElementById('speedBtn');
+    const videoInput = document.getElementById('videoInput');
+
+    let currentSpeed = 1.0;
+
+    // 更新状态显示
+    function updateStatus(message, type = 'info') {
+      status.textContent = message;
+      status.className = `status ${type}`;
+    }
+
+    // 初始化渲染器
+    function initRenderer(videoSrc, layout = 'horizontal') {
+      if (renderer) {
+        renderer.destroy();
+      }
+
+      try {
+        updateStatus('正在加载视频...', 'info');
+
+        renderer = new AlphaVideoRenderer({
+          videoSrc: videoSrc,
+          canvas: canvas,
+          layout: layout,
+          autoplay: false,
+          loop: true,
+          muted: true,
+          playbackRate: currentSpeed
+        });
+
+        // 覆盖事件回调
+        renderer._onPlay = function() {
+          updateStatus(`正在播放 (${currentSpeed}x速度)`, 'success');
+          playBtn.disabled = true;
+          pauseBtn.disabled = false;
+        };
+
+        renderer._onPause = function() {
+          updateStatus('已暂停', 'info');
+          playBtn.disabled = false;
+          pauseBtn.disabled = true;
+        };
+
+        renderer._onError = function(err) {
+          updateStatus('错误: ' + err.message, 'error');
+        };
+
+        // 视频加载完成
+        renderer.video.addEventListener('loadedmetadata', () => {
+          updateStatus('视频加载完成，点击播放按钮开始', 'success');
+          playBtn.disabled = false;
+        });
+
+      } catch (err) {
+        updateStatus('初始化失败: ' + err.message, 'error');
+      }
+    }
+
+    // 文件选择
+    videoInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const url = URL.createObjectURL(file);
+
+        // 根据文件名猜测布局
+        const layout = file.name.includes('vertical') ? 'vertical' : 'horizontal';
+
+        initRenderer(url, layout);
+      }
+    });
+
+    // 播放按钮
+    playBtn.addEventListener('click', () => {
+      if (renderer) {
+        renderer.play();
+      }
+    });
+
+    // 暂停按钮
+    pauseBtn.addEventListener('click', () => {
+      if (renderer) {
+        renderer.pause();
+      }
+    });
+
+    // 停止按钮
+    stopBtn.addEventListener('click', () => {
+      if (renderer) {
+        renderer.stop();
+        updateStatus('已停止', 'info');
+        playBtn.disabled = false;
+        pauseBtn.disabled = true;
+      }
+    });
+
+    // 速度切换按钮
+    speedBtn.addEventListener('click', () => {
+      const speeds = [1.0, 1.5, 2.0, 0.5];
+      const currentIndex = speeds.indexOf(currentSpeed);
+      const nextIndex = (currentIndex + 1) % speeds.length;
+      currentSpeed = speeds[nextIndex];
+
+      if (renderer) {
+        renderer.setPlaybackRate(currentSpeed);
+      }
+
+      speedBtn.textContent = `⚡ ${currentSpeed}x 速度`;
+
+      if (renderer && renderer.isPlaying) {
+        updateStatus(`正在播放 (${currentSpeed}x速度)`, 'success');
+      }
+    });
+
+    // 初始状态
+    playBtn.disabled = true;
+    pauseBtn.disabled = true;
+
+    // 拖放支持
+    const demoArea = document.querySelector('.demo-area');
+
+    demoArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      demoArea.style.background = '#e8e8e8';
+    });
+
+    demoArea.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      demoArea.style.background = '#f5f5f5';
+    });
+
+    demoArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      demoArea.style.background = '#f5f5f5';
+
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('video/')) {
+        const url = URL.createObjectURL(file);
+        const layout = file.name.includes('vertical') ? 'vertical' : 'horizontal';
+        initRenderer(url, layout);
+      } else {
+        updateStatus('请拖放MP4视频文件', 'error');
+      }
+    });
+  </script>
+</body>
+</html>
