@@ -6,3 +6,7 @@ output/
 test/assets/*.webm
 test/assets/*.mp4
 test/assets/*.mov
+
+# FFmpeg二进制文件（自动下载）
+bin/
+ffmpeg-temp.zip

@@ -29,18 +29,25 @@ npm install
 
 ### FFmpeg安装选项
 
-项目支持两种方式使用FFmpeg：
+项目支持多种方式使用FFmpeg：
 
-**选项1: 自动安装（推荐新手）**
-- npm install会自动下载ffmpeg-static包
-- 无需手动安装FFmpeg
-- 如果下载失败，请使用选项2
-
-**选项2: 使用系统FFmpeg（推荐）**
+**选项1: 自动下载到项目目录（推荐！适用于所有macOS版本）**
 ```bash
-# macOS
-brew install ffmpeg
+npm run install-ffmpeg
+```
+- ✅ 适用于macOS Sequoia等新版本系统
+- ✅ 无需Homebrew
+- ✅ 自动下载、解压、配置
+- ✅ FFmpeg存放在项目bin/目录，不影响系统
 
+**选项2: 使用Homebrew（macOS）**
+```bash
+brew install ffmpeg
+```
+⚠️ 注意：macOS Sequoia可能不支持，请使用选项1
+
+**选项3: 使用系统包管理器**
+```bash
 # Ubuntu/Debian
 sudo apt-get install ffmpeg
 
@@ -48,12 +55,12 @@ sudo apt-get install ffmpeg
 # 从 https://ffmpeg.org/download.html 下载并添加到PATH
 ```
 
-安装完成后，只需安装核心依赖：
+**选项4: 使用ffmpeg-static包**
 ```bash
-npm install --no-optional  # 跳过ffmpeg-static
+npm install  # 会自动下载ffmpeg-static
 ```
 
-> 💡 转换脚本会自动检测并使用可用的FFmpeg（优先ffmpeg-static，其次系统FFmpeg）
+> 💡 转换脚本会自动检测并使用可用的FFmpeg（优先级：项目bin/ > ffmpeg-static > 系统FFmpeg > Homebrew路径）
 
 ## 使用方法
 
@@ -285,30 +292,42 @@ gif-optimizing/
 
 ### FFmpeg相关问题
 
-**Q: 遇到 "spawn ffmpeg EACCES" 错误怎么办?**
-A: 这是FFmpeg没有执行权限的问题，运行以下命令修复：
+**Q: macOS Sequoia上Homebrew无法安装FFmpeg怎么办?**
+A: macOS Sequoia太新，Homebrew可能还不支持。使用我们的自动下载工具：
+```bash
+npm run install-ffmpeg
+```
+这会自动下载FFmpeg到项目目录，无需Homebrew。
+
+**Q: 遇到 "spawn ffmpeg EACCES" 或 "spawn error -88" 错误?**
+A: 这是FFmpeg权限或路径问题。最简单的解决方案：
+```bash
+npm run install-ffmpeg
+```
+这会下载一个干净的FFmpeg到项目目录并自动配置。
+
+或者手动修复权限：
 ```bash
 npm run fix-ffmpeg
 ```
-或手动修复：
+
+**Q: 无法找到可用的FFmpeg?**
+A: 使用自动下载工具（推荐）：
 ```bash
-chmod +x node_modules/ffmpeg-static/ffmpeg
+npm run install-ffmpeg
 ```
 
-如果仍有问题，推荐使用系统FFmpeg：
-```bash
-# macOS
-brew install ffmpeg
-
-# 然后使用系统FFmpeg
-npm install --no-optional
-```
+或手动下载：
+1. 访问 https://evermeet.cx/ffmpeg/
+2. 下载 ffmpeg.zip
+3. 解压到项目的 bin/ 目录
+4. 运行 `chmod +x bin/ffmpeg`
 
 **Q: npm install 一直卡住不动?**
 A: 这通常是因为下载ffmpeg-static包太慢。解决方案：
 1. 取消安装 (Ctrl+C)
-2. 安装系统FFmpeg（见上面说明）
-3. 只安装必需依赖：`npm install --no-optional`
+2. 使用自动下载工具：`npm run install-ffmpeg`
+3. 或只安装必需依赖：`npm install --no-optional`
 
 ### 转换相关问题
 

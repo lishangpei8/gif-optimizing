@@ -13,7 +13,44 @@ const path = require('path');
  */
 function setupFFmpeg(ffmpeg) {
   const methods = [
-    // 方法1: 尝试使用ffmpeg-static
+    // 方法1: 尝试使用项目本地的FFmpeg (bin/ffmpeg)
+    {
+      name: '项目本地FFmpeg',
+      check: () => {
+        try {
+          const localFFmpegPath = path.join(__dirname, '..', 'bin', 'ffmpeg');
+
+          if (!fs.existsSync(localFFmpegPath)) {
+            return { success: false, error: '项目bin目录中没有FFmpeg' };
+          }
+
+          // 检查执行权限
+          try {
+            fs.accessSync(localFFmpegPath, fs.constants.X_OK);
+          } catch (permError) {
+            try {
+              fs.chmodSync(localFFmpegPath, 0o755);
+              console.log('✓ 已自动添加FFmpeg执行权限');
+            } catch (chmodError) {
+              return { success: false, error: '无权限执行本地FFmpeg' };
+            }
+          }
+
+          // 验证可执行
+          try {
+            execSync(`"${localFFmpegPath}" -version`, { stdio: 'pipe' });
+            ffmpeg.setFfmpegPath(localFFmpegPath);
+            return { success: true, path: localFFmpegPath };
+          } catch (execError) {
+            return { success: false, error: '本地FFmpeg无法执行' };
+          }
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      }
+    },
+
+    // 方法2: 尝试使用ffmpeg-static
     {
       name: 'ffmpeg-static',
       check: () => {
@@ -117,12 +154,13 @@ function setupFFmpeg(ffmpeg) {
   // 所有方法都失败了
   console.error('\n❌ 无法找到可用的FFmpeg！\n');
   console.error('请选择以下任一方式安装FFmpeg：\n');
-  console.error('方法1: 使用Homebrew (macOS推荐)');
+  console.error('方法1: 自动下载到项目目录 (推荐！)');
+  console.error('  node download-ffmpeg.js\n');
+  console.error('方法2: 使用Homebrew (如果支持你的macOS版本)');
   console.error('  brew install ffmpeg\n');
-  console.error('方法2: 重新安装ffmpeg-static');
-  console.error('  npm install ffmpeg-static --force\n');
   console.error('方法3: 手动下载FFmpeg');
-  console.error('  访问: https://ffmpeg.org/download.html\n');
+  console.error('  访问: https://evermeet.cx/ffmpeg/');
+  console.error('  下载后解压到项目的 bin/ 目录\n');
 
   return {
     success: false,
