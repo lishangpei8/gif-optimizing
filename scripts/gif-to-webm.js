@@ -3,14 +3,13 @@
 const ffmpeg = require('fluent-ffmpeg');
 const fs = require('fs');
 const path = require('path');
+const { setupFFmpeg } = require('./ffmpeg-helper');
 
-// 尝试使用ffmpeg-static，如果不存在则使用系统FFmpeg
-try {
-  const ffmpegPath = require('ffmpeg-static');
-  ffmpeg.setFfmpegPath(ffmpegPath);
-} catch (e) {
-  // 使用系统FFmpeg
-  console.log('✓ 使用系统FFmpeg (请确保已安装)');
+// 智能检测并配置FFmpeg
+const ffmpegSetup = setupFFmpeg(ffmpeg);
+if (!ffmpegSetup.success) {
+  console.error('FFmpeg配置失败，无法继续转换');
+  process.exit(1);
 }
 
 /**
